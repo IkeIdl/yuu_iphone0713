@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iPhone 5 Interactive Simulator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Styles for Retro iOS Aesthetic -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: #0f172a;
+            touch-action: manipulation;
+        }
+
+        /* iPhone 5 Frame Styling */
+        .iphone-5-frame {
+            width: 320px;
+            height: 652px;
+            background: #1e1e1e;
+            border-radius: 42px;
+            box-shadow: 
+                0 0 0 2px #3a3a3c,
+                0 0 0 6px #272729,
+                0 20px 50px rgba(0, 0, 0, 0.8),
+                inset 0 0 6px rgba(255, 255, 255, 0.2);
+            position: relative;
+            padding: 52px 14px 52px 14px;
+            box-sizing: border-box;
+            border: 2px solid #111;
+        }
+
+        /* Screen Glass Filter */
+        .iphone-screen {
+            width: 292px;
+            height: 548px;
+            background-color: #000;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.8);
+        }
+
+        /* Hardware Details */
+        .camera-lens {
+            width: 8px;
+            height: 8px;
+            background: #0d121c;
+            border-radius: 50%;
+            position: absolute;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: inset 0 0 2px rgba(255,255,255,0.3);
+        }
+
+        .earpiece {
+            width: 50px;
+            height: 4px;
+            background: #2a2a2b;
+            border-radius: 3px;
+            position: absolute;
+            top: 36px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: inset 0 1px 1px rgba(0,0,0,0.8);
+        }
+
+        /* Home Button */
+        .home-button {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1f1f1f 0%, #111111 100%);
+            border: 1px solid #333;
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.6);
+            z-index: 60;
+        }
+
+        .home-button-square {
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid #8e8e93;
+            border-radius: 4px;
+        }
+
+        .home-button:active {
+            transform: translateX(-50%) scale(0.96);
+        }
+
+        /* Slide Transition for Apps */
+        .app-page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f8f9fa;
+            transition: transform 0.25s cubic-bezier(0.1, 0.9, 0.2, 1), opacity 0.25s ease;
+            transform: scale(0.85);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-page.active {
+            transform: scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 3px;
+        }
+
+        .app-icon {
+            transition: transform 0.1s ease, filter 0.1s ease;
+            cursor: pointer;
+        }
+        .app-icon:active {
+            transform: scale(0.9);
+            filter: brightness(0.8);
+        }
+
+        .wallpaper-bg {
+            background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%);
+            background-size: cover;
+            background-position: center;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+        .shimmer-text {
+            background: linear-gradient(to right, #666 0%, #fff 50%, #666 100%);
+            background-size: 200px 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 2.5s infinite;
+        }
+
+        @keyframes slideDown {
+            0% { transform: translateY(-100%); opacity: 0; }
+            15% { transform: translateY(0); opacity: 1; }
+            85% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100%); opacity: 0; }
+        }
+        .notification-banner {
+            animation: slideDown 4s ease-in-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 select-none">
+
+    <div class="iphone-5-frame">
+        <div class="camera-lens"></div>
+        <div class="earpiece"></div>
+
+        <div class="iphone-screen" id="iphoneScreen">
+            <!-- Status Bar -->
+            <div class="h-5 bg-black/40 backdrop-blur-md text-white text-[10px] px-2 flex justify-between items-center z-50 font-semibold select-none shrink-0">
+                <div class="flex items-center space-x-1">
+                    <span class="flex space-x-[2px]">
+                        <span class="w-1 h-1 bg-white rounded-full"></span>
+                        <span class="w-1 h-1 bg-white rounded-full"></span>
+                        <span class="w-1 h-1 bg-white rounded-full"></span>
+                        <span class="w-1 h-1 bg-white rounded-full"></span>
+                        <span class="w-1 h-1 bg-white/40 rounded-full"></span>
+                    </span>
+                    <span class="ml-1 text-[9px] font-normal">KT</span>
+                    <i class="fa-solid fa-wifi text-[8px] ml-1"></i>
+                </div>
+                <div id="statusClock" class="text-center font-bold">12:00</div>
+                <div class="flex items-center space-x-1">
+                    <span class="text-[9px] font-normal">88%</span>
+                    <i class="fa-solid fa-battery-three-quarters text-[10px]"></i>
+                </div>
+            </div>
+
+            <!-- NOTIFICATION BANNER OVERLAY -->
+            <div id="notificationBanner" class="absolute top-5 left-1 right-1 bg-black/80 backdrop-blur-lg border border-white/20 text-white rounded-xl p-2.5 z-50 flex items-start space-x-2 shadow-2xl hidden cursor-pointer" onclick="openMessageFromNotification()">
+                <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white shrink-0 mt-0.5">
+                    <i class="fa-solid fa-comment text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-center">
+                        <span id="notificationSender" class="text-[11px] font-bold text-gray-200">엄마</span>
+                        <span class="text-[9px] text-gray-400">지금</span>
+                    </div>
+                    <div id="notificationText" class="text-xs text-gray-100 truncate mt-0.5">집에 너무 늦게 들어가지 말고.</div>
+                </div>
+            </div>
+
+            <!-- COMPACT INCOMING CALL BANNER OVERLAY -->
+            <div id="incomingCallBanner" class="absolute top-5 left-1 right-1 bg-black/90 backdrop-blur-xl border border-white/20 text-white rounded-2xl p-2.5 z-50 flex items-center justify-between shadow-2xl hidden">
+                <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+                    <div class="w-9 h-9 bg-pink-500 rounded-full flex items-center justify-center text-white font-bold shrink-0 text-xs shadow">
+                        카키
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold text-gray-100 truncate">카키</div>
+                        <div class="text-[10px] text-gray-400">휴대폰 수신 전화...</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0 ml-2">
+                    <button onclick="declineCallBanner()" class="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs shadow active:scale-95 transition-transform">
+                        <i class="fa-solid fa-phone-slash"></i>
+                    </button>
+                    <button onclick="acceptCallBanner()" class="w-8 h-8 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white text-xs shadow active:scale-95 transition-transform">
+                        <i class="fa-solid fa-phone"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- LOCK SCREEN LAYER -->
+            <div id="lockScreen" class="absolute inset-0 z-40 wallpaper-bg flex flex-col justify-between pt-6 pb-8 px-4 text-white">
+                <div class="text-center mt-4">
+                    <div id="lockTime" class="text-5xl font-extralight tracking-tight">12:00</div>
+                    <div id="lockDate" class="text-xs font-light mt-1 text-gray-200">10월 22일 목요일</div>
+                </div>
+
+                <div class="mb-4">
+                    <div id="slideTrack" onclick="showPasscodeScreen()" class="bg-black/30 backdrop-blur-md h-12 rounded-full p-1 relative flex items-center border border-white/20 overflow-hidden cursor-pointer">
+                        <div id="slideButton" class="w-10 h-10 bg-gradient-to-b from-gray-100 to-gray-300 rounded-full shadow-md flex items-center justify-center text-gray-600 z-10 cursor-grab active:cursor-grabbing">
+                            <i class="fa-solid fa-chevron-right text-sm"></i>
+                        </div>
+                        <span id="slideText" class="absolute inset-0 flex items-center justify-center text-xs font-medium shimmer-text pointer-events-none pl-6">
+                            밀어서 잠금해제
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASSCODE ENTRY LAYER -->
+            <div id="passcodeScreen" class="absolute inset-0 z-40 bg-slate-900/90 backdrop-blur-xl flex flex-col justify-between p-6 text-white hidden">
+                <div class="text-center mt-6">
+                    <div class="text-sm font-light mb-4">암호 입력</div>
+                    <div id="passcodeDots" class="flex justify-center space-x-4 mb-2">
+                        <div class="w-3 h-3 rounded-full border border-white/60 dot"></div>
+                        <div class="w-3 h-3 rounded-full border border-white/60 dot"></div>
+                        <div class="w-3 h-3 rounded-full border border-white/60 dot"></div>
+                        <div class="w-3 h-3 rounded-full border border-white/60 dot"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 px-2 mb-4">
+                    <button onclick="pressKey('1')" class="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-xl font-light mx-auto flex items-center justify-center border border-white/20">1</button>
+                    <button onclick="pressKey('2')" class="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-xl font-light mx-auto flex items-center justify-center border border-white/20">2</button>
+                    <button onclick="pressKey('3')" class="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-xl font-light mx-auto flex items-center justify-center border border-white/20">3</button>
+                    <button onclick="pressKey('4')" class="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-xl font-light mx-auto flex items-center justify-center border border-white/20">4</button>
+                    <button onclick="pressKey('5')" class="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-xl font-light mx-auto flex items-center justify-center border border-white/20">5</button>
+                    <button onclick="pressKey('6')" class="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-xl font-light mx-auto flex items-center justify-center border border-white/20">6</button>
+                    <button onclick="pressKey('7')" class="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-xl font-light mx-auto flex items-center justify-center border border-white/20">7</button>
+                    <button onclick="pressKey('8')" class="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-xl font-light mx-auto flex items-center justify-center border border-white/20">8</button>
+                    <button onclick="pressKey('9')" class="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-xl font-light mx-auto flex items-center justify-center border border-white/20">9</button>
+                    <div></div>
+                    <button onclick="pressKey('0')" class="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-xl font-light mx-auto flex items-center justify-center border border-white/20">0</button>
+                    <button onclick="clearPasscode()" class="text-xs text-white/70 hover:text-white flex items-center justify-center font-medium">취소</button>
+                </div>
+            </div>
+
+            <!-- Home Screen Content -->
+            <div id="homeScreen" class="flex-1 wallpaper-bg flex flex-col justify-between p-3 pt-4 relative overflow-hidden">
+                <div class="grid grid-cols-4 gap-y-4 gap-x-2 text-center text-white text-[10px] font-medium mt-1">
+                    <div onclick="openApp('messagesApp')" class="app-icon flex flex-col items-center">
+                        <div class="w-12 h-12 bg-gradient-to-b from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg relative">
+                            <i class="fa-solid fa-comment text-white text-2xl"></i>
+                            <span id="unreadBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">3</span>
+                        </div>
+                        <span class="mt-1 shadow-sm">메시지</span>
+                    </div>
+
+                    <div onclick="openApp('photosApp')" class="app-icon flex flex-col items-center">
+                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg overflow-hidden relative border border-gray-100">
+                            <div class="grid grid-cols-2 gap-0.5 w-8 h-8 transform rotate-45">
+                                <div class="bg-yellow-400 rounded-full"></div>
+                                <div class="bg-red-500 rounded-full"></div>
+                                <div class="bg-blue-500 rounded-full"></div>
+                                <div class="bg-green-500 rounded-full"></div>
+                            </div>
+                        </div>
+                        <span class="mt-1 shadow-sm">사진</span>
+                    </div>
+
+                    <div onclick="openApp('notesApp')" class="app-icon flex flex-col items-center">
+                        <div class="w-12 h-12 bg-amber-100 rounded-xl flex flex-col shadow-lg overflow-hidden border border-amber-200">
+                            <div class="h-3 bg-amber-400 w-full border-b border-amber-300"></div>
+                            <div class="p-1 space-y-1">
+                                <div class="h-[1px] bg-amber-200 w-full"></div>
+                                <div class="h-[1px] bg-amber-200 w-full"></div>
+                                <div class="h-[1px] bg-amber-200 w-full"></div>
+                            </div>
+                        </div>
+                        <span class="mt-1 shadow-sm">메모</span>
+                    </div>
+
+                    <div onclick="openApp('clockApp')" class="app-icon flex flex-col items-center">
+                        <div class="w-12 h-12 bg-black rounded-xl flex items-center justify-center shadow-lg border border-gray-800 relative">
+                            <div class="w-10 h-10 rounded-full border border-gray-600 flex items-center justify-center relative">
+                                <span class="text-[7px] text-gray-400 absolute top-0.5">12</span>
+                                <div class="w-0.5 h-3 bg-white absolute top-2 rounded-full origin-bottom"></div>
+                                <div class="w-0.5 h-2 bg-orange-500 absolute top-2.5 origin-bottom rotate-45"></div>
+                                <div class="w-1 h-1 bg-white rounded-full z-10"></div>
+                            </div>
+                        </div>
+                        <span class="mt-1 shadow-sm">시계</span>
+                    </div>
+                </div>
+
+                <!-- Bottom Dock -->
+                <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-2 mb-1 border border-white/30 grid grid-cols-4 gap-2">
+                    <div onclick="openApp('phoneApp')" class="app-icon flex flex-col items-center">
+                        <div class="w-12 h-12 bg-gradient-to-b from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fa-solid fa-phone text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <div onclick="openApp('safariApp')" class="app-icon flex flex-col items-center">
+                        <div class="w-12 h-12 bg-gradient-to-b from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fa-regular fa-compass text-white text-2xl"></i>
+                        </div>
+                    </div>
+                    <div onclick="openApp('musicApp')" class="app-icon flex flex-col items-center">
+                        <div class="w-12 h-12 bg-gradient-to-b from-rose-400 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fa-solid fa-music text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <div onclick="openApp('photosApp')" class="app-icon flex flex-col items-center">
+                        <div class="w-12 h-12 bg-gradient-to-b from-gray-400 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fa-solid fa-camera text-white text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- APP: MUSIC APP -->
+            <div id="musicApp" class="app-page text-gray-900 bg-white">
+                <div class="bg-gray-100 border-b border-gray-300 p-2 flex justify-between items-center shrink-0">
+                    <button id="musicBackBtn" onclick="showPlaylistsView()" class="text-xs text-rose-500 font-medium hidden flex items-center gap-1">
+                        <i class="fa-solid fa-chevron-left"></i> 플레이리스트
+                    </button>
+                    <span id="musicHeaderTitle" class="font-bold text-sm text-gray-800 mx-auto">플레이리스트</span>
+                    <span class="w-8"></span>
+                </div>
+
+                <div id="playlistContainer" class="flex-1 overflow-y-auto divide-y divide-gray-200">
+                    <div onclick="openPlaylist('haikyuu')" class="p-3 flex items-center space-x-3 hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
+                        <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-black rounded-lg flex items-center justify-center text-white text-xl font-bold shadow-sm">
+                            <i class="fa-solid fa-volleyball"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-xs font-bold text-gray-900 truncate">Haikyuu</h4>
+                            <p class="text-[10px] text-gray-400 mt-0.5">3곡 • 하이큐 대표 OST</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+                    </div>
+
+                    <div onclick="openPlaylist('practice')" class="p-3 flex items-center space-x-3 hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-400 rounded-lg flex items-center justify-center text-white text-xl font-bold shadow-sm">
+                            <i class="fa-solid fa-person-running"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-xs font-bold text-gray-900 truncate">아침 연습용 신나는 곡</h4>
+                            <p class="text-[10px] text-gray-400 mt-0.5">2곡 • 활력 충전</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+                    </div>
+
+                    <div onclick="openPlaylist('chill')" class="p-3 flex items-center space-x-3 hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
+                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-xl font-bold shadow-sm">
+                            <i class="fa-solid fa-moon"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-xs font-bold text-gray-900 truncate">하교길 센치한 노래</h4>
+                            <p class="text-[10px] text-gray-400 mt-0.5">2곡 • 감성 BGM</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>
+                    </div>
+                </div>
+
+                <div id="songListContainer" class="flex-1 overflow-y-auto divide-y divide-gray-100 hidden">
+                    <div id="songsList" class="divide-y divide-gray-100"></div>
+                </div>
+
+                <div id="nowPlayingBar" class="bg-gray-900 text-white p-2.5 flex items-center justify-between shrink-0 border-t border-gray-800">
+                    <div class="flex items-center space-x-2.5 overflow-hidden">
+                        <div class="w-8 h-8 bg-rose-600 rounded flex items-center justify-center text-xs shrink-0 relative overflow-hidden">
+                            <i class="fa-solid fa-music"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div id="currentSongTitle" class="text-xs font-semibold truncate">Fly High!!</div>
+                            <div id="currentArtist" class="text-[10px] text-gray-400 truncate">BURNOUT SYNDROMES</div>
+                        </div>
+                    </div>
+                    <button id="playPauseBtn" onclick="togglePlay()" class="w-8 h-8 rounded-full bg-white text-gray-900 flex items-center justify-center text-xs ml-2 shrink-0 active:scale-95 transition-transform">
+                        <i id="playIcon" class="fa-solid fa-play ml-0.5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- APP: SAFARI -->
+            <div id="safariApp" class="app-page text-gray-900 bg-gray-100">
+                <div class="bg-gray-200 border-b border-gray-300 p-2.5 flex flex-col gap-2 shrink-0 shadow-sm">
+                    <div class="relative flex items-center">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 text-xs text-gray-400"></i>
+                        <input type="text" id="safariSearchInput" placeholder="검색 또는 웹사이트 이름 입력" class="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-4 bg-white">
+                    <div class="text-xs font-semibold text-gray-500 mb-3 flex items-center gap-1.5">
+                        <i class="fa-solid fa-clock-rotate-left text-gray-400"></i> 최근 검색 기록
+                    </div>
+
+                    <div class="divide-y divide-gray-100">
+                        <div onclick="selectSearchQuery('해외여행 갈 곳 추천')" class="py-3 flex items-center justify-between hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
+                            <span class="text-xs text-gray-800 font-medium">해외여행 갈 곳 추천</span>
+                            <i class="fa-solid fa-arrow-up-left text-gray-300 text-xs"></i>
+                        </div>
+                        <div onclick="selectSearchQuery('부모님 생일 선물 추천')" class="py-3 flex items-center justify-between hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
+                            <span class="text-xs text-gray-800 font-medium">부모님 생일 선물 추천</span>
+                            <i class="fa-solid fa-arrow-up-left text-gray-300 text-xs"></i>
+                        </div>
+                        <div onclick="selectSearchQuery('좋아하는 사람한테 용기있게 고백하는 방법')" class="py-3 flex items-center justify-between hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
+                            <span class="text-xs text-gray-800 font-medium">좋아하는 사람한테 용기있게 고백하는 방법</span>
+                            <i class="fa-solid fa-arrow-up-left text-gray-300 text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-100 border-t border-gray-300 flex justify-between items-center px-6 py-2 text-blue-500 shrink-0">
+                    <i class="fa-solid fa-chevron-left text-sm opacity-40"></i>
+                    <i class="fa-solid fa-chevron-right text-sm opacity-40"></i>
+                    <i class="fa-solid fa-share-nodes text-sm"></i>
+                    <i class="fa-regular fa-bookmark text-sm"></i>
+                    <i class="fa-regular fa-clone text-sm"></i>
+                </div>
+            </div>
+
+            <!-- APP: PHONE -->
+            <div id="phoneApp" class="app-page text-gray-900">
+                <div class="bg-gray-100 border-b border-gray-300 p-2 text-center font-bold text-sm text-gray-800 shrink-0">
+                    최근 통화
+                </div>
+                <div class="flex-1 overflow-y-auto divide-y divide-gray-200 bg-white">
+                    <div class="p-3 flex justify-between items-center hover:bg-gray-50 active:bg-gray-100 cursor-pointer" onclick="makeCall('엄마')">
+                        <div>
+                            <div class="font-bold text-sm text-red-600">엄마 <span class="text-xs text-gray-400 font-normal">(2)</span></div>
+                            <div class="text-[11px] text-gray-400 flex items-center gap-1">
+                                <i class="fa-solid fa-phone-slash text-[9px]"></i> 부재중 전화
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400 flex items-center gap-2">
+                            오후 6:20
+                            <i class="fa-solid fa-circle-info text-blue-500 text-base"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-3 flex justify-between items-center hover:bg-gray-50 active:bg-gray-100 cursor-pointer" onclick="makeCall('아빠')">
+                        <div>
+                            <div class="font-bold text-sm text-gray-900">아빠</div>
+                            <div class="text-[11px] text-gray-400 flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i> 발신 전화
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400 flex items-center gap-2">
+                            어제
+                            <i class="fa-solid fa-circle-info text-blue-500 text-base"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-3 flex justify-between items-center hover:bg-gray-50 active:bg-gray-100 cursor-pointer" onclick="makeCall('카키')">
+                        <div>
+                            <div class="font-bold text-sm text-gray-900">카키</div>
+                            <div class="text-[11px] text-gray-400 flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-down-left text-[9px]"></i> 수신 전화 (1분)
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400 flex items-center gap-2">
+                            어제
+                            <i class="fa-solid fa-circle-info text-blue-500 text-base"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-3 flex justify-between items-center hover:bg-gray-50 active:bg-gray-100 cursor-pointer" onclick="makeCall('오이카와 선배')">
+                        <div>
+                            <div class="font-bold text-sm text-red-600">오이카와 선배</div>
+                            <div class="text-[11px] text-gray-400 flex items-center gap-1">
+                                <i class="fa-solid fa-phone-slash text-[9px]"></i> 부재중 전화
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400 flex items-center gap-2">
+                            화요일
+                            <i class="fa-solid fa-circle-info text-blue-500 text-base"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-100 border-t border-gray-300 grid grid-cols-3 py-1.5 text-center text-[10px] text-gray-500 shrink-0">
+                    <div class="flex flex-col items-center cursor-pointer text-blue-600">
+                        <i class="fa-solid fa-clock text-base"></i>
+                        <span>최근 통화</span>
+                    </div>
+                    <div class="flex flex-col items-center cursor-pointer" onclick="alert('연락처 목록: 엄마, 아빠, 카키, 오이카와 선배, 여동생')">
+                        <i class="fa-solid fa-user text-base"></i>
+                        <span>연락처</span>
+                    </div>
+                    <div class="flex flex-col items-center cursor-pointer" onclick="alert('키패드 기능 준비 중')">
+                        <i class="fa-solid fa-grip text-base"></i>
+                        <span>키패드</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- APP: MESSAGES LIST -->
+            <div id="messagesApp" class="app-page text-gray-900">
+                <div class="bg-gray-100 border-b border-gray-300 p-2 flex justify-between items-center shrink-0">
+                    <span class="text-xs text-blue-500">편집</span>
+                    <span class="font-bold text-sm text-gray-800">메시지</span>
+                    <i class="fa-regular fa-pen-to-square text-blue-500 text-sm cursor-pointer"></i>
+                </div>
+                <div class="flex-1 overflow-y-auto divide-y divide-gray-200 bg-white">
+                    <div onclick="openThread('mom')" class="p-2.5 flex items-center space-x-3 hover:bg-gray-50 active:bg-gray-100 cursor-pointer relative">
+                        <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold shrink-0 relative">
+                            엄마
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline">
+                                <h4 class="text-xs font-bold text-gray-900 truncate">엄마</h4>
+                                <span class="text-[10px] text-gray-400" id="momMessageTime">오후 5:40</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 truncate" id="momMessagePreview">유우, 테이블 위에 돈 두고 갔으니까 동생이랑 저녁 시켜 먹어.</p>
+                        </div>
+                        <span id="momThreadBadge" class="bg-blue-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shrink-0">1</span>
+                    </div>
+
+                    <div onclick="openThread('sister')" class="p-2.5 flex items-center space-x-3 hover:bg-gray-50 active:bg-gray-100 cursor-pointer relative">
+                        <div class="w-10 h-10 bg-pink-300 rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                            카키
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline">
+                                <h4 class="text-xs font-bold text-gray-900 truncate">카키</h4>
+                                <span class="text-[10px] text-gray-400" id="sisterMessageTime">오후 6:15</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 truncate" id="sisterMessagePreview">오빠, 집에 들어오기 전에 디저트 좀 사와.</p>
+                        </div>
+                        <span id="sisterThreadBadge" class="bg-blue-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shrink-0">1</span>
+                    </div>
+
+                    <div onclick="openThread('oikawa')" class="p-2.5 flex items-center space-x-3 hover:bg-gray-50 active:bg-gray-100 cursor-pointer relative">
+                        <div class="w-10 h-10 bg-teal-400 rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                            오이
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline">
+                                <h4 class="text-xs font-bold text-gray-900 truncate">오이카와 선배</h4>
+                                <span class="text-[10px] text-gray-400">오후 8:02</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 truncate">유우 짱, 내일은 아침 연습 늦지마.</p>
+                        </div>
+                        <span id="oikawaThreadBadge" class="bg-blue-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shrink-0">1</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MESSAGE DETAIL THREAD -->
+            <div id="messageDetailApp" class="app-page text-gray-900 bg-slate-100">
+                <div class="bg-gray-100 border-b border-gray-300 p-2 flex items-center justify-between shrink-0">
+                    <button onclick="closeApp('messageDetailApp')" class="text-xs text-blue-500 flex items-center gap-1 font-medium">
+                        <i class="fa-solid fa-chevron-left"></i> 메시지
+                    </button>
+                    <span id="chatTitle" class="font-bold text-xs text-gray-800">상대방</span>
+                    <span class="w-8"></span>
+                </div>
+                <div id="chatBody" class="flex-1 p-3 overflow-y-auto space-y-3 text-xs flex flex-col"></div>
+                <div class="p-2 bg-gray-200 border-t border-gray-300 flex items-center gap-2 shrink-0">
+                    <input type="text" id="chatInput" placeholder="iMessage" class="flex-1 px-3 py-1 bg-white border border-gray-300 rounded-full text-xs focus:outline-none" onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button onclick="sendMessage()" class="text-blue-500 font-bold text-xs">전송</button>
+                </div>
+            </div>
+
+            <!-- APP: NOTES -->
+            <div id="notesApp" class="app-page text-gray-800 bg-yellow-50">
+                <div class="bg-amber-200 border-b border-amber-300 p-2 flex justify-between items-center shrink-0">
+                    <span class="text-xs text-amber-800 font-medium">목록</span>
+                    <span class="font-bold text-sm text-amber-900">메모</span>
+                    <i class="fa-regular fa-pen-to-square text-amber-800 text-sm cursor-pointer"></i>
+                </div>
+                <div class="p-4 flex-1 overflow-y-auto space-y-3 font-mono text-xs">
+                    <div class="border-b border-amber-200 pb-2">
+                        <ul class="space-y-2 text-sm text-gray-800 font-sans mt-2">
+                            <li class="flex items-center gap-2">
+                                <i class="fa-regular fa-square-check text-amber-600"></i>
+                                <span>무라카미 카키 디저트 심부름</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fa-regular fa-square-check text-amber-600"></i>
+                                <span>내일 아침 일찍 일어나기</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- APP: PHOTOS -->
+            <div id="photosApp" class="app-page text-gray-900 bg-white">
+                <div class="bg-gray-100 border-b border-gray-300 p-2 flex justify-between items-center shrink-0">
+                    <span class="font-bold text-sm text-gray-800">귀여운 반려동물</span>
+                    <label for="imageUpload" class="text-xs text-blue-500 font-medium cursor-pointer">
+                        <i class="fa-solid fa-plus text-sm"></i> 추가
+                    </label>
+                    <input type="file" id="imageUpload" accept="image/*" multiple class="hidden" onchange="handleImageUpload(event)">
+                </div>
+                
+                <div class="p-1 flex-1 overflow-y-auto">
+                    <div id="photoGrid" class="grid grid-cols-3 gap-1">
+                        <div class="aspect-square bg-gray-200 overflow-hidden cursor-pointer" onclick="viewPhoto(this)">
+                            <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x300/f87171/ffffff?text=Cute+Cat+1';">
+                        </div>
+                        <div class="aspect-square bg-gray-200 overflow-hidden cursor-pointer" onclick="viewPhoto(this)">
+                            <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x300/60a5fa/ffffff?text=Cute+Dog+1';">
+                        </div>
+                        <div class="aspect-square bg-gray-200 overflow-hidden cursor-pointer" onclick="viewPhoto(this)">
+                            <img src="https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x300/34d399/ffffff?text=Cute+Cat+2';">
+                        </div>
+                        <div class="aspect-square bg-gray-200 overflow-hidden cursor-pointer" onclick="viewPhoto(this)">
+                            <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x300/fbbf24/ffffff?text=Cute+Dog+2';">
+                        </div>
+                        <div class="aspect-square bg-gray-200 overflow-hidden cursor-pointer" onclick="viewPhoto(this)">
+                            <img src="https://images.unsplash.com/photo-1533738363-b7f9aef128ce?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x300/a78bfa/ffffff?text=Cute+Cat+3';">
+                        </div>
+                        <div class="aspect-square bg-gray-200 overflow-hidden cursor-pointer" onclick="viewPhoto(this)">
+                            <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x300/f472b6/ffffff?text=Cute+Dog+3';">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PHOTO VIEWER MODAL -->
+            <div id="photoViewer" class="app-page bg-black flex flex-col justify-between items-center z-50">
+                <div class="w-full p-3 flex justify-between text-white shrink-0">
+                    <button onclick="closeApp('photoViewer')" class="text-xs text-blue-400 font-bold">닫기</button>
+                    <span class="text-xs font-semibold">사진</span>
+                    <span class="w-8"></span>
+                </div>
+                <div class="flex-1 flex items-center justify-center p-2 w-full">
+                    <img id="fullPhoto" src="" class="max-w-full max-h-full object-contain rounded">
+                </div>
+            </div>
+
+            <!-- APP: CLOCK -->
+            <div id="clockApp" class="app-page text-white bg-black">
+                <div class="bg-gray-900 border-b border-gray-800 p-2 text-center font-bold text-sm text-gray-200 shrink-0">
+                    알람
+                </div>
+                <div class="flex-1 overflow-y-auto divide-y divide-gray-800 bg-black">
+                    <div id="alarmList"></div>
+                </div>
+                <div class="bg-gray-900 border-t border-gray-800 grid grid-cols-2 py-2 text-center text-[10px] text-gray-400 shrink-0">
+                    <div class="flex flex-col items-center cursor-pointer text-orange-500">
+                        <i class="fa-solid fa-alarm-clock text-base"></i>
+                        <span>알람</span>
+                    </div>
+                    <div class="flex flex-col items-center cursor-pointer" onclick="alert('스톱워치 기능 준비 중')">
+                        <i class="fa-solid fa-stopwatch text-base"></i>
+                        <span>스톱워치</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CALL OVERLAY -->
+            <div id="callOverlay" class="absolute inset-0 bg-slate-900 text-white z-50 flex flex-col justify-between p-6 hidden cursor-pointer" onclick="handleCallScreenClick()">
+                <div class="text-center mt-8">
+                    <div id="callTargetName" class="text-2xl font-bold mb-1">엄마</div>
+                    <div id="callStatus" class="text-xs text-gray-400">통화 연결 중...</div>
+                </div>
+
+                <div class="flex flex-col items-center my-auto space-y-4">
+                    <div class="w-24 h-24 rounded-full bg-gray-700 flex items-center justify-center text-3xl font-bold shadow-lg">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <div id="callSubtitle" class="hidden max-w-[90%] bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs text-center p-3 rounded-xl shadow-lg leading-relaxed">
+                        "오빠, 오면서 초코 케이크... 아니다, 도넛 사와줘"
+                    </div>
+                </div>
+
+                <div class="flex justify-center pb-8 gap-8" id="callControls">
+                    <button onclick="event.stopPropagation(); endCall()" class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white text-2xl shadow-lg active:scale-95 transition-transform">
+                        <i class="fa-solid fa-phone-slash"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="home-button" onclick="goHome()">
+            <div class="home-button-square"></div>
+        </div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            hours = hours < 10 ? '0' + hours : hours;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            const timeStr = `${hours}:${minutes}`;
+            
+            document.getElementById('statusClock').innerText = timeStr;
+            document.getElementById('lockTime').innerText = timeStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        let enteredPasscode = "";
+        const correctPasscode = "0713";
+        let isUnlocked = false;
+        let eventTriggerTimer = null;
+        let callClickStep = 0;
+        let activeNotificationKey = 'mom';
+
+        const slideBtn = document.getElementById('slideButton');
+        const slideTrack = document.getElementById('slideTrack');
+        let isDragging = false;
+        let startX = 0;
+        let currentPos = 0;
+
+        function getMaxSlide() {
+            return slideTrack.clientWidth - slideBtn.clientWidth - 8;
+        }
+
+        function onDragStart(e) {
+            isDragging = true;
+            startX = (e.type === 'touchstart') ? e.touches[0].clientX : e.clientX;
+            slideBtn.style.transition = 'none';
+        }
+
+        function onDragMove(e) {
+            if (!isDragging) return;
+            const clientX = (e.type === 'touchmove') ? e.touches[0].clientX : e.clientX;
+            let deltaX = clientX - startX;
+            const maxSlide = getMaxSlide();
+
+            if (deltaX < 0) deltaX = 0;
+            if (deltaX > maxSlide) deltaX = maxSlide;
+
+            currentPos = deltaX;
+            slideBtn.style.transform = `translateX(${deltaX}px)`;
+
+            const text = document.getElementById('slideText');
+            if (text) {
+                text.style.opacity = 1 - (deltaX / maxSlide);
+            }
+
+            if (deltaX >= maxSlide * 0.8) {
+                isDragging = false;
+                slideBtn.style.transform = `translateX(${maxSlide}px)`;
+                setTimeout(() => {
+                    resetSlider();
+                    showPasscodeScreen();
+                }, 100);
+            }
+        }
+
+        function onDragEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            const maxSlide = getMaxSlide();
+            if (currentPos < maxSlide * 0.8) {
+                resetSlider();
+            }
+        }
+
+        function resetSlider() {
+            slideBtn.style.transition = 'transform 0.25s ease';
+            slideBtn.style.transform = 'translateX(0px)';
+            currentPos = 0;
+            const text = document.getElementById('slideText');
+            if (text) text.style.opacity = 1;
+        }
+
+        slideBtn.addEventListener('mousedown', onDragStart);
+        window.addEventListener('mousemove', onDragMove);
+        window.addEventListener('mouseup', onDragEnd);
+
+        slideBtn.addEventListener('touchstart', onDragStart, { passive: true });
+        window.addEventListener('touchmove', onDragMove, { passive: true });
+        window.addEventListener('touchend', onDragEnd);
+
+        function showPasscodeScreen() {
+            document.getElementById('lockScreen').classList.add('hidden');
+            document.getElementById('passcodeScreen').classList.remove('hidden');
+        }
+
+        function pressKey(num) {
+            if (enteredPasscode.length < 4) {
+                enteredPasscode += num;
+                updateDots();
+                if (enteredPasscode.length === 4) {
+                    setTimeout(checkPasscode, 100);
+                }
+            }
+        }
+
+        function updateDots() {
+            const dots = document.querySelectorAll('#passcodeDots .dot');
+            dots.forEach((dot, index) => {
+                if (index < enteredPasscode.length) {
+                    dot.classList.add('bg-white');
+                } else {
+                    dot.classList.remove('bg-white');
+                }
+            });
+        }
+
+        function checkPasscode() {
+            if (enteredPasscode === correctPasscode) {
+                isUnlocked = true;
+                document.getElementById('passcodeScreen').classList.add('hidden');
+                enteredPasscode = "";
+                updateDots();
+                scheduleSequenceEvents();
+            } else {
+                const screen = document.getElementById('passcodeScreen');
+                screen.classList.add('shake');
+                setTimeout(() => {
+                    screen.classList.remove('shake');
+                    enteredPasscode = "";
+                    updateDots();
+                }, 400);
+            }
+        }
+
+        function clearPasscode() {
+            enteredPasscode = "";
+            updateDots();
+            document.getElementById('passcodeScreen').classList.add('hidden');
+            document.getElementById('lockScreen').classList.remove('hidden');
+        }
+
+        function goHome() {
+            if (!isUnlocked) {
+                lockPhone();
+                return;
+            }
+            const apps = document.querySelectorAll('.app-page');
+            apps.forEach(app => app.classList.remove('active'));
+            document.getElementById('callOverlay').classList.add('hidden');
+            document.getElementById('photoViewer').classList.remove('active');
+        }
+
+        function openApp(appId) {
+            const app = document.getElementById(appId);
+            if (app) {
+                app.classList.add('active');
+            }
+        }
+
+        function closeApp(appId) {
+            const app = document.getElementById(appId);
+            if (app) {
+                app.classList.remove('active');
+            }
+        }
+
+        function lockPhone() {
+            isUnlocked = false;
+            enteredPasscode = "";
+            updateDots();
+            resetSlider();
+            document.getElementById('passcodeScreen').classList.add('hidden');
+            document.getElementById('lockScreen').classList.remove('hidden');
+            if (eventTriggerTimer) clearTimeout(eventTriggerTimer);
+        }
+
+        function scheduleSequenceEvents() {
+            if (eventTriggerTimer) clearTimeout(eventTriggerTimer);
+
+            eventTriggerTimer = setTimeout(() => {
+                const newMomMessage = "집에 너무 늦게 들어가지 말고.";
+                messageData.mom.messages.push({
+                    text: newMomMessage,
+                    time: "방금 전",
+                    isUser: false
+                });
+
+                document.getElementById('momMessagePreview').innerText = newMomMessage;
+                document.getElementById('momMessageTime').innerText = "방금 전";
+
+                incrementUnreadBadge('mom');
+
+                if (currentChatKey === 'mom' && document.getElementById('messageDetailApp').classList.contains('active')) {
+                    renderMessages('mom');
+                    decrementUnreadBadge('mom');
+                } else {
+                    activeNotificationKey = 'mom';
+                    const banner = document.getElementById('notificationBanner');
+                    document.getElementById('notificationSender').innerText = "엄마";
+                    document.getElementById('notificationText').innerText = newMomMessage;
+                    banner.classList.remove('hidden');
+                    banner.classList.add('notification-banner');
+
+                    setTimeout(() => {
+                        banner.classList.add('hidden');
+                        banner.classList.remove('notification-banner');
+                    }, 4000);
+                }
+
+                setTimeout(() => {
+                    showIncomingCallBanner();
+                }, 5000);
+
+            }, 10000);
+        }
+
+        function openMessageFromNotification() {
+            document.getElementById('notificationBanner').classList.add('hidden');
+            openThread(activeNotificationKey);
+        }
+
+        function incrementUnreadBadge(key) {
+            const badge = document.getElementById('unreadBadge');
+            if (badge) {
+                let currentCount = parseInt(badge.innerText, 10);
+                if (isNaN(currentCount)) currentCount = 0;
+                currentCount += 1;
+                badge.innerText = currentCount;
+                badge.classList.remove('hidden');
+            }
+
+            if (key && messageData[key]) {
+                messageData[key].unreadCount = (messageData[key].unreadCount || 0) + 1;
+                const threadBadge = document.getElementById(`${key}ThreadBadge`);
+                if (threadBadge) {
+                    threadBadge.innerText = messageData[key].unreadCount;
+                    threadBadge.classList.remove('hidden');
+                }
+            }
+        }
+
+        function decrementUnreadBadge(key) {
+            if (!key || !messageData[key]) return;
+
+            const countToReduce = messageData[key].unreadCount || 0;
+            if (countToReduce <= 0) return;
+
+            messageData[key].unreadCount = 0;
+            const threadBadge = document.getElementById(`${key}ThreadBadge`);
+            if (threadBadge) {
+                threadBadge.classList.add('hidden');
+            }
+
+            const badge = document.getElementById('unreadBadge');
+            if (badge) {
+                let currentCount = parseInt(badge.innerText, 10);
+                if (isNaN(currentCount)) currentCount = 0;
+                currentCount = Math.max(0, currentCount - countToReduce);
+                
+                if (currentCount > 0) {
+                    badge.innerText = currentCount;
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        }
+
+        function showIncomingCallBanner() {
+            const banner = document.getElementById('incomingCallBanner');
+            if (banner) {
+                banner.classList.remove('hidden');
+            }
+        }
+
+        function declineCallBanner() {
+            document.getElementById('incomingCallBanner').classList.add('hidden');
+            
+            setTimeout(() => {
+                const kakhiText = "왜 전화 안 받아!!! 초코 케이크 먹고 싶어졌어! 아니, 그냥 도넛 사와줘!";
+                messageData.sister.messages.push({
+                    text: kakhiText,
+                    time: "방금 전",
+                    isUser: false
+                });
+
+                document.getElementById('sisterMessagePreview').innerText = kakhiText;
+                document.getElementById('sisterMessageTime').innerText = "방금 전";
+
+                incrementUnreadBadge('sister');
+
+                if (currentChatKey === 'sister' && document.getElementById('messageDetailApp').classList.contains('active')) {
+                    renderMessages('sister');
+                    decrementUnreadBadge('sister');
+                } else {
+                    activeNotificationKey = 'sister';
+                    const banner = document.getElementById('notificationBanner');
+                    document.getElementById('notificationSender').innerText = "카키";
+                    document.getElementById('notificationText').innerText = kakhiText;
+                    banner.classList.remove('hidden');
+                    banner.classList.add('notification-banner');
+
+                    setTimeout(() => {
+                        banner.classList.add('hidden');
+                        banner.classList.remove('notification-banner');
+                    }, 4000);
+                }
+            }, 800);
+        }
+
+        function acceptCallBanner() {
+            document.getElementById('incomingCallBanner').classList.add('hidden');
+            makeCall('카키');
+        }
+
+        let currentChatKey = null;
+
+        const messageData = {
+            mom: {
+                title: "엄마",
+                unreadCount: 1,
+                messages: [
+                    { text: "유우, 테이블 위에 돈 두고 갔으니까 동생이랑 저녁 시켜 먹어.", time: "오후 5:40", isUser: false }
+                ]
+            },
+            sister: {
+                title: "카키",
+                unreadCount: 1,
+                messages: [
+                    { text: "오빠, 집에 들어오기 전에 디저트 좀 사와.", time: "오후 6:15", isUser: false }
+                ]
+            },
+            oikawa: {
+                title: "오이카와 선배",
+                unreadCount: 1,
+                messages: [
+                    { text: "유우 짱, 내일은 아침 연습 늦지마.", time: "오후 8:02", isUser: false }
+                ]
+            }
+        };
+
+        function openThread(key) {
+            currentChatKey = key;
+            const data = messageData[key];
+            if (!data) return;
+
+            document.getElementById('chatTitle').innerText = data.title;
+            renderMessages(key);
+            openApp('messageDetailApp');
+            decrementUnreadBadge(key);
+        }
+
+        function renderMessages(key) {
+            const data = messageData[key];
+            if (!data) return;
+
+            const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML = '';
+
+            data.messages.forEach(msg => {
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'text-center text-[10px] text-gray-400 my-1';
+                timeDiv.innerText = msg.time;
+                chatBody.appendChild(timeDiv);
+
+                const msgDiv = document.createElement('div');
+                if (msg.isUser) {
+                    msgDiv.className = 'self-end max-w-[80%] bg-blue-500 text-white rounded-2xl rounded-tr-none px-3 py-2 text-xs shadow-sm';
+                } else {
+                    msgDiv.className = 'self-start max-w-[80%] bg-gray-200 text-gray-800 rounded-2xl rounded-tl-none px-3 py-2 text-xs shadow-sm';
+                }
+                msgDiv.innerText = msg.text;
+                chatBody.appendChild(msgDiv);
+            });
+
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const messageText = input.value.trim();
+            if (!messageText || !currentChatKey) return;
+
+            messageData[currentChatKey].messages.push({
+                text: messageText,
+                time: "방금 전",
+                isUser: true
+            });
+
+            input.value = '';
+            renderMessages(currentChatKey);
+
+            if (currentChatKey === 'oikawa' && messageText === '네.') {
+                setTimeout(() => {
+                    messageData.oikawa.messages.push({
+                        text: "대답은 잘 하네!!!",
+                        time: "방금 전",
+                        isUser: false
+                    });
+
+                    if (currentChatKey === 'oikawa' && document.getElementById('messageDetailApp').classList.contains('active')) {
+                        renderMessages('oikawa');
+                    } else {
+                        incrementUnreadBadge('oikawa');
+                    }
+                }, 1000);
+            }
+        }
+
+        const musicData = {
+            haikyuu: {
+                title: "Haikyuu",
+                songs: [
+                    { title: "Fly High!!", artist: "BURNOUT SYNDROMES" },
+                    { title: "Imagination", artist: "SPYAIR" },
+                    { title: "Hikariare", artist: "BURNOUT SYNDROMES" }
+                ]
+            },
+            practice: {
+                title: "아침 연습용 신나는 곡",
+                songs: [
+                    { title: "Ah Yeah!!", artist: "Sukima Switch" },
+                    { title: "Phoenix", artist: "BURNOUT SYNDROMES" }
+                ]
+            },
+            chill: {
+                title: "하교길 센치한 노래",
+                songs: [
+                    { title: "Leo", artist: "Tacica" },
+                    { title: "Mates", artist: "Nico Touches the Walls" }
+                ]
+            }
+        };
+
+        function openPlaylist(key) {
+            const data = musicData[key];
+            if (!data) return;
+
+            document.getElementById('musicHeaderTitle').innerText = data.title;
+            document.getElementById('musicBackBtn').classList.remove('hidden');
+            document.getElementById('playlistContainer').classList.add('hidden');
+            
+            const songsList = document.getElementById('songsList');
+            songsList.innerHTML = '';
+
+            data.songs.forEach(song => {
+                const item = document.createElement('div');
+                item.className = 'p-3 flex items-center justify-between hover:bg-gray-50 active:bg-gray-100 cursor-pointer';
+                item.onclick = () => selectSong(song.title, song.artist);
+                item.innerHTML = `
+                    <div>
+                        <div class="text-xs font-bold text-gray-800">${song.title}</div>
+                        <div class="text-[10px] text-gray-400 mt-0.5">${song.artist}</div>
+                    </div>
+                    <i class="fa-solid fa-play text-gray-300 text-xs"></i>
+                `;
+                songsList.appendChild(item);
+            });
+
+            document.getElementById('songListContainer').classList.remove('hidden');
+        }
+
+        function showPlaylistsView() {
+            document.getElementById('musicHeaderTitle').innerText = '플레이리스트';
+            document.getElementById('musicBackBtn').classList.add('hidden');
+            document.getElementById('songListContainer').classList.add('hidden');
+            document.getElementById('playlistContainer').classList.remove('hidden');
+        }
+
+        let isPlaying = false;
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const icon = document.getElementById('playIcon');
+            if (isPlaying) {
+                icon.className = 'fa-solid fa-pause ml-0';
+            } else {
+                icon.className = 'fa-solid fa-play ml-0.5';
+            }
+        }
+
+        function selectSong(title, artist) {
+            document.getElementById('currentSongTitle').innerText = title;
+            document.getElementById('currentArtist').innerText = artist;
+            isPlaying = true;
+            document.getElementById('playIcon').className = 'fa-solid fa-pause ml-0';
+        }
+
+        function selectSearchQuery(query) {
+            document.getElementById('safariSearchInput').value = query;
+        }
+
+        function generateAlarms() {
+            const alarmContainer = document.getElementById('alarmList');
+            alarmContainer.innerHTML = '';
+
+            let startHour = 5;
+            let startMinute = 0;
+
+            for (let i = 0; i <= 12; i++) {
+                let h = startHour < 10 ? '0' + startHour : startHour;
+                let m = startMinute < 10 ? '0' + startMinute : startMinute;
+                
+                const isChecked = i < 4;
+
+                const alarmItem = document.createElement('div');
+                alarmItem.className = 'p-3 flex justify-between items-center hover:bg-gray-900/50';
+                alarmItem.innerHTML = `
+                    <div>
+                        <div class="text-2xl font-light tracking-tight">${h}:${m} <span class="text-xs font-normal">AM</span></div>
+                        <div class="text-[10px] text-gray-500">알람</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                    </label>
+                `;
+
+                alarmContainer.appendChild(alarmItem);
+
+                startMinute += 5;
+                if (startMinute >= 60) {
+                    startMinute = 0;
+                    startHour++;
+                }
+            }
+        }
+        generateAlarms();
+
+        function handleImageUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            const grid = document.getElementById('photoGrid');
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'aspect-square bg-gray-200 overflow-hidden cursor-pointer';
+                    div.onclick = function() { viewPhoto(this); };
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-full h-full object-cover';
+
+                    div.appendChild(img);
+                    grid.prepend(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function viewPhoto(element) {
+            const img = element.querySelector('img');
+            if (img) {
+                document.getElementById('fullPhoto').src = img.src;
+                openApp('photoViewer');
+            }
+        }
+
+        function makeCall(name) {
+            document.getElementById('callTargetName').innerText = name;
+            document.getElementById('callStatus').innerText = '연결 중...';
+            document.getElementById('callSubtitle').classList.add('hidden');
+            callClickStep = 0;
+
+            document.getElementById('callControls').innerHTML = `
+                <button onclick="event.stopPropagation(); endCall()" class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white text-2xl shadow-lg active:scale-95 transition-transform">
+                    <i class="fa-solid fa-phone-slash"></i>
+                </button>
+            `;
+            document.getElementById('callOverlay').classList.remove('hidden');
+
+            setTimeout(() => {
+                const status = document.getElementById('callStatus');
+                if (status) status.innerText = '00:01';
+            }, 2500);
+        }
+
+        function handleCallScreenClick() {
+            const name = document.getElementById('callTargetName').innerText;
+            if (name === '카키') {
+                const subtitle = document.getElementById('callSubtitle');
+                if (callClickStep === 0) {
+                    subtitle.innerText = '"오빠, 오면서 초코 케이크... 아니다, 도넛 사와줘"';
+                    subtitle.classList.remove('hidden');
+                    callClickStep = 1;
+                } else if (callClickStep === 1) {
+                    subtitle.innerText = '"아 맞다 그리고 우유도 두 개 부탁해!"';
+                    callClickStep = 2;
+                } else {
+                    endCall();
+                }
+            }
+        }
+
+        function endCall() {
+            document.getElementById('callOverlay').classList.add('hidden');
+            document.getElementById('callSubtitle').classList.add('hidden');
+            callClickStep = 0;
+        }
+    </script>
+</body>
+</html>
